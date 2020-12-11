@@ -2,8 +2,8 @@ SourceCode [![Build Status](https://travis-ci.org/lihaoyi/sourcecode.svg?branch=
 ==========
 
 ```scala
-"com.lihaoyi" %% "sourcecode" % "0.1.5" // Scala-JVM
-"com.lihaoyi" %%% "sourcecode" % "0.1.5" // Scala.js / Scala Native
+"com.lihaoyi" %% "sourcecode" % "0.1.9" // Scala-JVM
+"com.lihaoyi" %%% "sourcecode" % "0.1.9" // Scala.js / Scala Native
 ```
 
 `sourcecode` is a small Scala library for that provides common "source code"
@@ -40,6 +40,11 @@ meaningful names that tell you where they were defined, automatically without
 needing you to manually assign a string-ID to every anonymous function or 
 anonymous class you define all over your code bas. 
 
+If you like using Sourcecode, you might also enjoy this book by the author which
+teaches you Scala in a similarly simple and straightforward way:
+
+- [Hands-on Scala Programming](https://www.handsonscala.com/) https://www.handsonscala.com/
+
 Table of Contents
 =================
 
@@ -57,6 +62,8 @@ Overview
 The kinds of compilation-time data that `sourcecode` provides are:
 
 - `sourcecode.File`: full path of the current file where the call occurs
+- `sourcecode.FileName`: name of the current file where the call occurs; less
+    verbose than `sourcecode.File` but often enough for debugging purposes
 - `sourcecode.Line`: current line number
 - `sourcecode.Name`: the name of the nearest enclosing definition: `val`,
   `class`, whatever.
@@ -125,10 +132,13 @@ object Implicits {
     assert(pkg.value == "sourcecode")
 
     val file = implicitly[sourcecode.File]
-    assert(file.value.endsWith("/sourcecode/shared/src/test/scala/sourcecode/Implicits.scala"))
+    assert(file.value.endsWith("/sourcecode/Implicits.scala"))
+
+    val fileName = implicitly[sourcecode.FileName]
+    assert(fileName.value == "Implicits.scala")
 
     val line = implicitly[sourcecode.Line]
-    assert(line.value == 20)
+    assert(line.value == 23)
 
     lazy val myLazy = {
       trait Bar{
@@ -139,13 +149,19 @@ object Implicits {
         assert(fullName.value == "sourcecode.Implicits.Bar.fullName")
 
         val file = implicitly[sourcecode.File]
-        assert(file.value.endsWith("/sourcecode/shared/src/test/scala/sourcecode/Implicits.scala"))
+        assert(file.value.endsWith("/sourcecode/Implicits.scala"))
+
+        val fileName = implicitly[sourcecode.FileName]
+        assert(fileName.value == "Implicits.scala")
 
         val line = implicitly[sourcecode.Line]
-        assert(line.value == 34)
+        assert(line.value == 40)
 
         val enclosing = implicitly[sourcecode.Enclosing]
-        assert(enclosing.value == "sourcecode.Implicits.implicitRun myLazy$lzy Bar#enclosing")
+        assert(
+          (enclosing.value == "sourcecode.Implicits.implicitRun myLazy$lzy Bar#enclosing") ||
+          (enclosing.value == "sourcecode.Implicits.implicitRun myLazy Bar#enclosing") // encoding changed in Scala 2.12
+        )
       }
       val b = new Bar{}
     }
@@ -164,42 +180,51 @@ to pull them in using the `()` syntax:
 ```scala
 package sourcecode
 
-object Apply {
-  def applyRun() = {
-    val name = sourcecode.Name()
-    assert(name == "name")
+object Implicits {
+  def implicitRun() = {
+    val name = implicitly[sourcecode.Name]
+    assert(name.value == "name")
 
-    val fullName = sourcecode.FullName()
-    assert(fullName == "sourcecode.Apply.fullName")
+    val fullName = implicitly[sourcecode.FullName]
+    assert(fullName.value == "sourcecode.Implicits.fullName")
 
-    val enclosing = sourcecode.Enclosing()
-    assert(enclosing == "sourcecode.Apply.applyRun enclosing")
+    val enclosing = implicitly[sourcecode.Enclosing]
+    assert(enclosing.value == "sourcecode.Implicits.implicitRun enclosing")
 
-    val pkg = sourcecode.Pkg()
-    assert(pkg == "sourcecode")
+    val pkg = implicitly[sourcecode.Pkg]
+    assert(pkg.value == "sourcecode")
 
-    val file = sourcecode.File()
-    assert(file.endsWith("/sourcecode/shared/src/test/scala/sourcecode/Apply.scala"))
+    val file = implicitly[sourcecode.File]
+    assert(file.value.endsWith("/sourcecode/Implicits.scala"))
 
-    val line = sourcecode.Line()
-    assert(line == 20)
+    val fileName = implicitly[sourcecode.FileName]
+    assert(fileName.value == "Implicits.scala")
+
+    val line = implicitly[sourcecode.Line]
+    assert(line.value == 23)
 
     lazy val myLazy = {
       trait Bar{
-        val name = sourcecode.Name()
-        assert(name == "name")
+        val name = implicitly[sourcecode.Name]
+        assert(name.value == "name")
 
-        val fullName = sourcecode.FullName()
-        assert(fullName == "sourcecode.Apply.Bar.fullName")
+        val fullName = implicitly[sourcecode.FullName]
+        assert(fullName.value == "sourcecode.Implicits.Bar.fullName")
 
-        val file = sourcecode.File()
-        assert(file.endsWith("/sourcecode/shared/src/test/scala/sourcecode/Apply.scala"))
+        val file = implicitly[sourcecode.File]
+        assert(file.value.endsWith("/sourcecode/Implicits.scala"))
 
-        val line = sourcecode.Line()
-        assert(line == 34)
+        val fileName = implicitly[sourcecode.FileName]
+        assert(fileName.value == "Implicits.scala")
 
-        val enclosing = sourcecode.Enclosing()
-        assert(enclosing == "sourcecode.Apply.applyRun myLazy$lzy Bar#enclosing")
+        val line = implicitly[sourcecode.Line]
+        assert(line.value == 40)
+
+        val enclosing = implicitly[sourcecode.Enclosing]
+        assert(
+          (enclosing.value == "sourcecode.Implicits.implicitRun myLazy$lzy Bar#enclosing") ||
+          (enclosing.value == "sourcecode.Implicits.implicitRun myLazy Bar#enclosing") // encoding changed in Scala 2.12
+        )
       }
       val b = new Bar{}
     }
@@ -208,8 +233,8 @@ object Apply {
 }
 ```
 
-By default, the various implicits all ignore any synthetic `<init>` or 
-`<local Foo>` methods that might be present:
+By default, the various implicits all ignore any synthetic `<init>`,  
+`<local Foo>` or `$anonfun` methods that might be present:
 
 ```scala
 package sourcecode
@@ -599,6 +624,21 @@ in its `.toString` method.
 
 Version History
 ===============
+
+0.1.9
+-----
+
+- `$anonfun` segments are now ignored by `sourcecode.Enclosing`
+
+0.1.8
+-----
+
+- Add `sourceco.FileName` implicit
+
+0.1.7
+-----
+
+- Support for Scala 2.13.0 final
 
 0.1.5
 -----

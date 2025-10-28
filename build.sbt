@@ -8,4 +8,4 @@ Compile / unmanagedSourceDirectories += baseDirectory.value / "sourcecode" / "sr
 Test / unmanagedSourceDirectories += baseDirectory.value / "sourcecode" / "test" / "src"
 Test / unmanagedSourceDirectories += baseDirectory.value / "sourcecode" / "test" / "src-2"
 Compile / scalacOptions ++= Seq("-feature", "-deprecation")
-Test / test := (Test / run).toTask("").value
+Test / test := (Test / runMain).toTask(" sourcecode.Main").value

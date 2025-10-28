@@ -6,6 +6,6 @@ libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
 Compile / unmanagedSourceDirectories += baseDirectory.value / "sourcecode" / "src"
 Compile / unmanagedSourceDirectories += baseDirectory.value / "sourcecode" / "src-2"
 Test / unmanagedSourceDirectories += baseDirectory.value / "sourcecode" / "test" / "src"
-Test / unmanagedSourceDirectories += baseDirectory.value / "sourcecode" / "jvm" / "src" / "test" / "scala"
+Test / unmanagedSourceDirectories += baseDirectory.value / "sourcecode" / "test" / "src-2"
 Compile / scalacOptions ++= Seq("-feature", "-deprecation")
 Test / test := (Test / run).toTask("").value

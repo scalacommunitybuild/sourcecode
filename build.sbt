@@ -1,3 +1,4 @@
+ThisBuild / resolvers += Resolver.scalaNightlyRepository
 scalaVersion := "2.13.17"
 organization := "com.lihaoyi"
 name := "sourcecode"

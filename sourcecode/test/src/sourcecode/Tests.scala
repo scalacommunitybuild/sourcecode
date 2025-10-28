@@ -18,9 +18,11 @@ object Tests{
     EnumFull.run()
     NoSynthetic.run()
     Synthetic.run()
+    SpecialName.macroValRun()
     ManualImplicit()
     TextTests()
     ArgsTests()
+    FileNameOffset.main()
 
     println("================LogExample================")
     logExample()

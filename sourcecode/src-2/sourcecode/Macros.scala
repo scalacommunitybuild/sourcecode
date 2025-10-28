@@ -1,5 +1,6 @@
 package sourcecode
 
+import java.util.concurrent.ConcurrentHashMap
 import language.experimental.macros
 
 trait NameMacros {
@@ -94,21 +95,49 @@ object Macros {
     c.Expr[FullName.Machine](q"""${c.prefix}($fullName)""")
   }
 
+  private val filePrefix = "//SOURCECODE_ORIGINAL_FILE_PATH="
+  private val filePrefixCache =
+    new ConcurrentHashMap[scala.reflect.internal.util.SourceFile, Option[String]]()
+  private def findOriginalFile(chars: Array[Char]): Option[String] = {
+    new String(chars).linesIterator.find(_.contains(filePrefix)).map(_.split(filePrefix).last)
+  }
+
   def fileImpl(c: Compat.Context): c.Expr[sourcecode.File] = {
     import c.universe._
-    val file = c.enclosingPosition.source.path
+
+    val file = filePrefixCache
+      .computeIfAbsent(c.enclosingPosition.source, source => findOriginalFile(source.content))
+      .getOrElse(c.enclosingPosition.source.path)
+
     c.Expr[sourcecode.File](q"""${c.prefix}($file)""")
   }
 
   def fileNameImpl(c: Compat.Context): c.Expr[sourcecode.FileName] = {
     import c.universe._
-    val fileName = c.enclosingPosition.source.path.split('/').last
+    val fileName = filePrefixCache
+      .computeIfAbsent(c.enclosingPosition.source, source => findOriginalFile(source.content))
+      .getOrElse(c.enclosingPosition.source.path)
+      .split('/').last
     c.Expr[sourcecode.FileName](q"""${c.prefix}($fileName)""")
   }
 
+  private val linePrefix = "//SOURCECODE_ORIGINAL_CODE_START_MARKER"
+  private val linePrefixCache =
+    new ConcurrentHashMap[scala.reflect.internal.util.SourceFile, Int]()
+  
   def lineImpl(c: Compat.Context): c.Expr[sourcecode.Line] = {
     import c.universe._
-    val line = c.enclosingPosition.line
+    val offset = linePrefixCache.computeIfAbsent(
+      c.enclosingPosition.source,
+      source => new String(source.content)
+        .linesIterator
+        .indexWhere(_.contains(linePrefix)) match{
+        case -1 => 0
+        case n => n + 1
+      }
+    )
+
+    val line = c.enclosingPosition.line - offset
     c.Expr[sourcecode.Line](q"""${c.prefix}($line)""")
   }
 

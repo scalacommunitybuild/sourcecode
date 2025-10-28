@@ -1,4 +1,4 @@
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.17"
 organization := "com.lihaoyi"
 name := "sourcecode"
 libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
